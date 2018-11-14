@@ -1,0 +1,32 @@
+node {
+    /* Requires the Docker Pipeline plugin to be installed */
+  docker.image('yi/adas-build:0.1').inside('-v /var/lib/jenkins/workspace/.ccache/:/usr/src/.ccache') {
+  stage ('Clone ADAS Repo') {
+    git branch: 'develop', credentialsId: 'dafb29ef-d9a7-47ec-b15b-1794000ffd8c', url: 'ssh://git@server_1/media/CODE_CENTRAL/adas'
+    sh '''#!/bin/bash -xe
+          cd $WORKSPACE
+          sudo chown -R jenkins:jenkins .git/modules
+          git submodule update --init --recursive 
+       '''
+	}
+  stage('Build All Debug') {
+    sh '''#!/bin/bash -xe
+          cd $WORKSPACE/project/linux
+            if [ -d "/var/tmp/adas" ]; then
+	           rm -fr /var/tmp/adas
+            fi
+          ./build_all.sh debug
+            if [ $? != 0 ]; then
+               return 1
+            fi
+       '''
+  }
+  stage('Valgrind Test') {
+    sh '''#!/bin/bash -xe
+             set +e
+             mkdir -p $WORKSPACE/build/linux/output
+             valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck.log $WORKSPACE/build/linux/bin/fr_demo $WORKSPACE/build/linux/bin/../../../tools/fr_demo/demo1.yuv
+        '''
+  }
+ }
+}
