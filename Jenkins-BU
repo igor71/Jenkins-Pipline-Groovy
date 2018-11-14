@@ -1,0 +1,41 @@
+node('jenkins_bu') {
+  stage('Create Jenkins Arcive') {
+    sh '''#!/bin/bash -xe
+             cd /root/.jenkins
+             tar cpzf jenkins_6_${BUILD_NUMBER}.tgz . --warning=no-file-changed --exclude="./workspace" --exclude=./*tgz || ( export ret=$?; [[ $ret -eq 1 ]] || exit "$ret" )
+             mv jenkins_6_${BUILD_NUMBER}.tgz $WORKSPACE
+             file="/root/.jenkins/enkins_6_${BUILD_NUMBER}.tgz"
+                  if [ -f $file ] ; then
+                        rm $file
+                  fi
+       '''
+  }
+  stage('Upload Backup Arcive To Network Share') {
+    sh 'pv jenkins_6_${BUILD_NUMBER}.tgz > /media/common/IT/jenkins_8/Server_6/jenkins_6_${BUILD_NUMBER}.tgz'
+  }
+  stage('Keep Backup Files Only For Latest 7 Days') {
+    sh 'sshpass -f PW.txt ssh -tt -o StrictHostKeyChecking=no admin@yifileserver "find /share/Common/IT/jenkins_8/Server_6 -mtime +7 -type f | xargs rm -f"'
+  }
+  stage('Archive Inegrity Check') {
+    catchError {sh '''#!/bin/bash -xe
+                   md5sum /media/common/IT/jenkins_8/Server_6/jenkins_6_${BUILD_NUMBER}.tgz > jenkins_6_${BUILD_NUMBER}.tgz.md5
+                   md5sum -c jenkins_6_${BUILD_NUMBER}.tgz.md5 
+                       if [ "$?" != "0" ]; then
+                          echo "SHA1 changed! Security breach? Job Will Be Marked As Failed!!!"
+                          exit -1
+                       fi
+        ''' }
+    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+  }
+  stage('Remove Original Archive File From Jenkins $HOME') {
+     try {
+      sh 'rm -f $WORKSPACE/jenkins_6_*'
+        currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+   }
+}
