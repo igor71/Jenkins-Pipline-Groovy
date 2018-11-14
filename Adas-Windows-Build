@@ -1,0 +1,84 @@
+node('windows-adas') {
+  stage('Clone ADAS Repo') {
+	bat '''
+	    echo "CleanUP %WORKSPACE% Directory"
+		cd C:\Jenkins\workspace\Windows-Build-Adas
+		forfiles /P . /M * /C "cmd /c if @isdir==FALSE del @file"
+		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
+	    git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/adas .
+        git submodule update --init --recursive
+		'''
+	}
+  stage('Running build_adas_demo') {
+       catchError {bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_adas_demo.bat
+             ''' }
+  step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+	}
+  stage('Running build_babycam_demo') {
+	bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_babycam_demo.bat
+             '''
+	}
+  stage('Running build_fr_demo') {
+	bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_fr_demo.bat
+             '''
+	}
+  stage('Running build_fr_test') {
+	bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_fr_test.bat
+             '''
+	}
+  stage('Running build_fulldemo') {
+	bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_fulldemo.bat
+             '''
+	}
+  stage('Running build_hm') {
+	bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_hm.bat
+             '''
+	}
+  stage('Running build_vc_test') {
+     try {
+         bat '''
+			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             set BOOST_ROOT=C:\\local\\boost_1_68_0
+             set OPENCV_DIR=C:\\local\\opencv\\build
+			 cd %WORKSPACE%\\project\\win
+			 build_vc_test.bat
+             '''
+        currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+   }
+}
