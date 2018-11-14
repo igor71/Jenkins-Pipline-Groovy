@@ -14,64 +14,64 @@ node('windows-adas') {
 	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_adas_demo.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_adas_demo.bat
                       ''' }
   step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
 	}
   stage('Running build_babycam_demo') {
 	bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_babycam_demo.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_babycam_demo.bat
              '''
 	}
   stage('Running build_fr_demo') {
 	bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_fr_demo.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_fr_demo.bat
             '''
 	}
   stage('Running build_fr_test') {
 	bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_fr_test.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_fr_test.bat
             '''
 	}
   stage('Running build_fulldemo') {
 	bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_fulldemo.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_fulldemo.bat
            '''
 	}
   stage('Running build_hm') {
 	bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_hm.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_hm.bat
              '''
 	}
   stage('Running build_vc_test') {
      try {
          bat '''
-			 set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
-			 cd %WORKSPACE%\\project\\win
-			 build_vc_test.bat
+	     cd %WORKSPACE%\\project\\win
+	     build_vc_test.bat
              '''
         currentBuild.result = 'SUCCESS'
     } catch (any) {
