@@ -11,14 +11,43 @@ node('windows-adas') {
 	}
   stage('Running build_adas_demo') {
        catchError {bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
-             set BOOST_ROOT=C:\\local\\boost_1_68_0
-             set OPENCV_DIR=C:\\local\\opencv\\build
+             SET PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             SET BOOST_ROOT=C:\\local\\boost_1_68_0
+             SET OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
-	     build_adas_demo.bat
-                      ''' }
+	     REM Retrive Current Directory
+             SET "SOURCE=%WORKSPACE%\\project\\win"
+             REM Go 2 Levels Up
+             FOR %%I IN ("%SOURCE%\\..\\..") DO SET "REPO_ROOT=%%~FI"
+             ECHO "WORKING DIRECTORY IS: %REPO_ROOT%"
+             SET ADAS_DEMO_VARIANT=mindemo
+                 :: How to build:
+                 ::  (none) - skip
+                 ::  1 - build
+                 ::  2 - rebuild
+             set ADAS_BUILD_FR=build
+             set BUILD_3RD_PARTY=build
+                 if NOT "%1" == "" (
+	             if "%1" == "rebuild-infra" (
+		              set ADAS_BUILD_FR=rebuild
+		              set BUILD_3RD_PARTY=rebuild
+	             )
+	             if "%1" == "rebuild" (
+		             set ADAS_BUILD_FR=%1
+	             )
+                 )
+                 if NOT "%2" == "" ( set BUILD_3RD_PARTY=%2 )
+                    :: call build_3rdParty.bat %ADAS_DEMO_VARIANT% %BUILD_3RD_PARTY% %2
+                    
+                    ECHO "REPO ROOT IS: %REPO_ROOT%"
+                    SET ADAS_FR_NAME=adas
+                    SET FR_SUBDIR=%REPO_ROOT%\\tools\\adas_demo
+                    :: FR
+                    echo "---------------- Building adas ------------------"
+                    call %REPO_ROOT%\\yi_infrastructure\\project\\win\\build_lib.bat adas_demo %ADAS_BUILD_FR% %FR_SUBDIR% "-DADAS_DEMO_NAME=%ADAS_FR_NAME%" ""
+             ''' }
   step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
-	}
+	}                 
   stage('Running build_babycam_demo') {
 	bat '''
 	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
