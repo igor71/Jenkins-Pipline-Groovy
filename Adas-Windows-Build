@@ -37,7 +37,7 @@ node('windows-adas') {
 	             )
                  )
                  if NOT "%2" == "" ( set BUILD_3RD_PARTY=%2 )
-                    :: call build_3rdParty.bat %ADAS_DEMO_VARIANT% %BUILD_3RD_PARTY% %2
+                    call build_3rdParty.bat %ADAS_DEMO_VARIANT% %BUILD_3RD_PARTY% %2
                     
                     ECHO "REPO ROOT IS: %REPO_ROOT%"
                     SET ADAS_FR_NAME=adas
@@ -90,7 +90,7 @@ node('windows-adas') {
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
-	     build_hm.bat
+	     build_hm.bat H2
              '''
 	}
   stage('Running build_vc_test') {
