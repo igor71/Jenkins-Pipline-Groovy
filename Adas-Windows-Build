@@ -90,7 +90,7 @@ node('windows-adas') {
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
-	     build_hm.bat H2
+	     build_hm.bat
              '''
 	}
   stage('Running build_vc_test') {
@@ -100,7 +100,7 @@ node('windows-adas') {
              set BOOST_ROOT=C:\\local\\boost_1_68_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
-	     build_vc_test.bat
+	     build_vc_test.bat H2
              '''
         currentBuild.result = 'SUCCESS'
     } catch (any) {
