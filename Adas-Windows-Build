@@ -14,6 +14,7 @@ node('windows-adas') {
              SET PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              SET BOOST_ROOT=C:\\local\\boost_1_68_0
              SET OPENCV_DIR=C:\\local\\opencv\\build
+	     
 	     cd %WORKSPACE%\\project\\win
 	     REM Retrive Current Directory
              SET "SOURCE=%WORKSPACE%\\project\\win"
@@ -22,19 +23,19 @@ node('windows-adas') {
              ECHO "WORKING DIRECTORY IS: %REPO_ROOT%"
              SET ADAS_DEMO_VARIANT=mindemo
                  :: How to build:
-                 ::  (none) - skip
-                 ::  1 - build
-                 ::  2 - rebuild
-             set ADAS_BUILD_FR=build
-             set BUILD_3RD_PARTY=build
+                 :: (none) - skip
+                 :: 1 - build
+                 :: 2 - rebuild
+             SET ADAS_BUILD_FR=build
+             SET BUILD_3RD_PARTY=build
                  if NOT "%1" == "" (
-	             if "%1" == "rebuild-infra" (
+	                if "%1" == "rebuild-infra" (
 		              set ADAS_BUILD_FR=rebuild
 		              set BUILD_3RD_PARTY=rebuild
 	             )
 	             if "%1" == "rebuild" (
 		             set ADAS_BUILD_FR=%1
-	             )
+	                )
                  )
                  if NOT "%2" == "" ( set BUILD_3RD_PARTY=%2 )
                     call build_3rdParty.bat %ADAS_DEMO_VARIANT% %BUILD_3RD_PARTY% %2
@@ -47,7 +48,7 @@ node('windows-adas') {
                     call %REPO_ROOT%\\yi_infrastructure\\project\\win\\build_lib.bat adas_demo %ADAS_BUILD_FR% %FR_SUBDIR% "-DADAS_DEMO_NAME=%ADAS_FR_NAME%" ""
              ''' }
   step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
-	}                 
+	}                                  
   stage('Running build_babycam_demo') {
 	bat '''
 	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
