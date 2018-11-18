@@ -2,7 +2,7 @@ node('windows-adas') {
   stage('Clone ADAS Repo') {
 	bat '''
 	    echo "CleanUP %WORKSPACE% Directory"
-		cd C:\Jenkins\workspace\Windows-Build-Adas
+		cd C:\\Jenkins\\workspace\\Windows-Build-Adas
 		forfiles /P . /M * /C "cmd /c if @isdir==FALSE del @file"
 		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
 	        git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/adas .
