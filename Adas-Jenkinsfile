@@ -20,7 +20,7 @@ pipeline {
               ./build_fr_demo.sh rebuild debug
               if [ $? != 0 ]; then
                  return 1
-              fi
+              fi 
            '''
         sh '''#!/bin/bash -xe
               cd $WORKSPACE
@@ -63,8 +63,14 @@ pipeline {
               ./InfraTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/infra-results.xml --log_level=all --report_level=no --show_progress=yes
 		   '''
         sh '''#!/bin/bash -xe
-		         mkdir -p $WORKSPACE/build/linux/output
-                 valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck.log $WORKSPACE/build/linux/bin/fr_demo /$WORKSPACE/build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
+		         cd $WORKSPACE
+		         dir_name="build/linux/output"
+                 if [ -d $dir_name ]; then
+                    echo "Directory Already Exists"
+                 else
+                    mkdir -p $dir_name
+                 fi
+                 valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=build/linux/output/fr_demo.%p.memcheck.log build/linux/bin/fr_demo build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
            ''' 
               }    
          post {
