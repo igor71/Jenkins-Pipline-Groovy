@@ -63,8 +63,8 @@ pipeline {
               ./InfraTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/infra-results.xml --log_level=all --report_level=no --show_progress=yes
 		   '''
         sh '''#!/bin/bash -xe
-		         cd $WORKSPACE
-		         dir_name="build/linux/output"
+		 cd $WORKSPACE
+		 dir_name="build/linux/output"
                  if [ -d $dir_name ]; then
                     echo "Directory Already Exists"
                  else
