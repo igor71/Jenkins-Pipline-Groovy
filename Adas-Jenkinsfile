@@ -1,0 +1,85 @@
+pipeline {
+   agent any
+      stages {
+        stage('Build in Docker') {
+            agent {
+                docker {
+                    image 'yi/adas-build:0.1'
+                    args '-v /var/lib/jenkins/workspace/.ccache/:/usr/src/.ccache'
+                    reuseNode true
+            }
+        }  
+        steps {
+        sh '''#!/bin/bash -xe
+              cd $WORKSPACE/project/linux
+              #rm -fr $WORKSPACE/tools/fr_demo/build
+              if [ -d "/var/tmp/adas" ]; then
+	             rm -fr /var/tmp/adas
+              fi
+              rm -fr $WORKSPACE/build/linux/output
+              ./build_fr_demo.sh rebuild debug
+              if [ $? != 0 ]; then
+                 return 1
+              fi
+           '''
+        sh '''#!/bin/bash -xe
+              cd $WORKSPACE
+              mkdir -p $WORKSPACE/build/linux/output
+              #mkdir -p $WORKSPACE/tools/fr_demo/build/output
+              nc=`nproc`
+              cppcheck -q -j$nc --enable=style --enable=warning --inconclusive --xml --xml-version=2 --std=c++11 -isrc/AdasLib/CommonUtils/MatchingGeiger src yi_infrastructure/src 2> $WORKSPACE/build/linux/output/cppcheck-result.xml
+           ''' 
+        sh '''#!/bin/bash -xe
+              cd $WORKSPACE/project/linux
+              ./build_py_libs.sh rebuild-infra
+              mkdir -p $WORKSPACE/build/linux/tests
+              cd $WORKSPACE/build/linux/lib/python/yi_infra
+              py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyInfra-utest.xml
+           ''' 
+        sh '''#!/bin/bash -xe
+              cd $WORKSPACE/build/linux/lib/python/yi_detection
+              #python test.py
+              py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyFd-utest.xml
+           '''
+		sh '''#!/bin/bash -xe
+              cd $WORKSPACE/build/linux/lib/python/yi_recognition
+              #python test.py
+              py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyFr-utest.xml
+           '''
+		sh '''#!/bin/bash -xe
+              cd $WORKSPACE/build/linux/lib/python/yi_babycam
+              #python test.py
+              py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyBabyCam-utest.xml
+           '''
+		sh '''#!/bin/bash -xe
+              cd $WORKSPACE/build/linux/bin
+              #cd $WORKSPACE/yi_infrastructure/src/yuv_jpeg/tests
+              export GTEST_OUTPUT="xml:$WORKSPACE/build/linux/tests/jpg-utest.xml"
+              ./JpegTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/jpg-results.xml --log_level=all --report_level=no --show_progress=yes
+           '''
+		sh '''#!/bin/bash -xe
+              cd $WORKSPACE/build/linux/bin
+              export GTEST_OUTPUT="xml:$WORKSPACE/build/linux/tests/infra-utest.xml"
+              ./InfraTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/infra-results.xml --log_level=all --report_level=no --show_progress=yes
+		   '''
+        sh '''#!/bin/bash -xe
+		         mkdir -p $WORKSPACE/build/linux/output
+                 valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck.log $WORKSPACE/build/linux/bin/fr_demo /$WORKSPACE/build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
+           ''' 
+              }    
+         post {
+            always {
+               script {
+                  if (currentBuild.result == null) {
+                     currentBuild.result = 'SUCCESS' 
+                  }
+               }
+               step([$class: 'Mailer',
+                     notifyEveryUnstableBuild: true,
+                     recipients: "igor.rabkin@xiaoyi.com",
+                     sendToIndividuals: true])
+            }
+         }
+      }		 
+   }
+}
