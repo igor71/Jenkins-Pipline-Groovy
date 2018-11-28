@@ -9,24 +9,109 @@ node {
           git submodule update --init --recursive 
        '''
 	}
-  stage('Build All Debug') {
+  stage('Build_Fr_Demo') {
     sh '''#!/bin/bash -xe
-          cd $WORKSPACE/project/linux
-            if [ -d "/var/tmp/adas" ]; then
-	           rm -fr /var/tmp/adas
-            fi
-          ./build_all.sh debug
-            if [ $? != 0 ]; then
-               return 1
-            fi
+              cd $WORKSPACE/project/linux
+              #rm -fr $WORKSPACE/tools/fr_demo/build
+              if [ -d "/var/tmp/adas" ]; then
+	             rm -fr /var/tmp/adas
+              fi
+              rm -fr $WORKSPACE/build/linux/output
+              ./build_fr_demo.sh rebuild debug
+              if [ $? != 0 ]; then
+                 return 1
+              fi
        '''
   }
-  stage('Valgrind Test') {
+  stage('Valgrind') {
     sh '''#!/bin/bash -xe
-             set +e
-             mkdir -p $WORKSPACE/build/linux/output
-             valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=$WORKSPACE/build/linux/output/fr_demo.%p.memcheck.log $WORKSPACE/build/linux/bin/fr_demo $WORKSPACE/build/linux/bin/../../../tools/fr_demo/demo1.yuv
-        '''
+	  cd $WORKSPACE
+          dir_name="build/linux/output"
+          if [ -d $dir_name ]; then
+             echo "Directory Already Exists"
+          else
+          mkdir -p $dir_name
+          fi
+          valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=build/linux/output/fr_demo.%p.memcheck.log build/linux/bin/fr_demo build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
+       '''
+  stage('CppCheck') {
+    sh '''#!/bin/bash -xe
+          cd $WORKSPACE
+          mkdir -p $WORKSPACE/build/linux/output
+          #mkdir -p $WORKSPACE/tools/fr_demo/build/output
+          nc=`nproc`
+          cppcheck -q -j$nc --enable=style --enable=warning --inconclusive --xml --xml-version=2 --std=c++11 -isrc/AdasLib/CommonUtils/MatchingGeiger src yi_infrastructure/src 2> $WORKSPACE/build/linux/output/cppcheck-result.xml
+       ''' 
+  }
+  stage('Build_PyInfra') {
+    sh '''#!/bin/bash -xe
+          cd $WORKSPACE/project/linux
+          ./build_py_libs.sh rebuild-infra
+          mkdir -p $WORKSPACE/build/linux/tests
+          cd $WORKSPACE/build/linux/lib/python/yi_infra
+          py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyInfra-utest.xml
+       ''' 
+  }
+  stage('Running Tests') {
+    sh '''#!/bin/bash -xe
+	  echo "Running PyFd, PyFr, PyBabyCam, JpegTest & InfraTest"  
+          cd $WORKSPACE/build/linux/lib/python/yi_detection
+          #python test.py
+          py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyFd-utest.xml
+	  cd $WORKSPACE/build/linux/lib/python/yi_recognition
+	  #python test.py
+          py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyFr-utest.xml
+	  cd $WORKSPACE/build/linux/lib/python/yi_babycam
+	  #python test.py
+          py.test test.py  --junitxml=$WORKSPACE/build/linux/tests/pyBabyCam-utest.xml
+	  cd $WORKSPACE/build/linux/bin
+          #cd $WORKSPACE/yi_infrastructure/src/yuv_jpeg/tests
+          export GTEST_OUTPUT="xml:$WORKSPACE/build/linux/tests/jpg-utest.xml"
+          ./JpegTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/jpg-results.xml --log_level=all --report_level=no --show_progress=yes
+	  cd $WORKSPACE/build/linux/bin
+          export GTEST_OUTPUT="xml:$WORKSPACE/build/linux/tests/infra-utest.xml"
+          ./InfraTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/infra-results.xml --log_level=all --report_level=no --show_progress=yes
+       '''
+  }
+  stage('Publish Test Results') {
+    try {
+       sh '''#!/bin/bash -xe
+             cd $WORKSPACE
+             echo "All build steps passed within $WORKSPACE"
+	     echo "Publishing Cppcheck, Junit, Valgrind, BoostTest & GoogleTest Results"
+           '''
+     currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+	publishCppcheck pattern:'build/linux/output/cppcheck-result.xml'
+	junit 'build/linux/tests/*.xml'
+	publishValgrind (
+	  failBuildOnInvalidReports: false,
+          failBuildOnMissingReports: true,
+          failThresholdDefinitelyLost: '',
+          failThresholdInvalidReadWrite: '',
+          failThresholdTotal: '',
+          pattern: 'build/linux/output/*.memcheck',
+          publishResultsForAbortedBuilds: false,
+          publishResultsForFailedBuilds: false,
+          sourceSubstitutionPaths: '',
+          unstableThresholdDefinitelyLost: '',
+          unstableThresholdInvalidReadWrite: '',
+          unstableThresholdTotal: ''
+	      )
+	xunit (
+          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+          tools: [ BoostTest(pattern: 'build/linux/tests/*-results.xml') ]
+              )
+	xunit (
+	  thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+	  tools: [ GoogleTest(pattern: 'build/linux/tests/*-utest.xml') ]
+	      )
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+   }
   }
  }
 }
