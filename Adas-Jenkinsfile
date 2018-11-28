@@ -22,6 +22,16 @@ pipeline {
                  return 1
               fi 
            '''
+		sh '''#!/bin/bash -xe
+		         cd $WORKSPACE
+		         dir_name="build/linux/output"
+                 if [ -d $dir_name ]; then
+                    echo "Directory Already Exists"
+                 else
+                    mkdir -p $dir_name
+                 fi
+                 valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=build/linux/output/fr_demo.%p.memcheck.log build/linux/bin/fr_demo build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
+           ''' 
         sh '''#!/bin/bash -xe
               cd $WORKSPACE
               mkdir -p $WORKSPACE/build/linux/output
@@ -62,19 +72,33 @@ pipeline {
               export GTEST_OUTPUT="xml:$WORKSPACE/build/linux/tests/infra-utest.xml"
               ./InfraTest --log_format=XML --log_sink=$WORKSPACE/build/linux/tests/infra-results.xml --log_level=all --report_level=no --show_progress=yes
 		   '''
-        sh '''#!/bin/bash -xe
-		 cd $WORKSPACE
-		 dir_name="build/linux/output"
-                 if [ -d $dir_name ]; then
-                    echo "Directory Already Exists"
-                 else
-                    mkdir -p $dir_name
-                 fi
-                 valgrind --tool=memcheck --leak-check=full --show-reachable=yes --undef-value-errors=yes --track-origins=yes --child-silent-after-fork=no --trace-children=yes --gen-suppressions=no --xml=yes --xml-file=build/linux/output/fr_demo.%p.memcheck --error-limit=no --log-file=build/linux/output/fr_demo.%p.memcheck.log build/linux/bin/fr_demo build/linux/bin/../../../tools/fr_demo/demo1.yuv || true
-           ''' 
               }    
          post {
             always {
+	     publishCppcheck pattern:'build/linux/output/cppcheck-result.xml'
+		junit 'build/linux/tests/*.xml'
+		publishValgrind (
+	        failBuildOnInvalidReports: false,
+                failBuildOnMissingReports: true,
+                failThresholdDefinitelyLost: '',
+                failThresholdInvalidReadWrite: '',
+                failThresholdTotal: '',
+                pattern: 'build/linux/output/*.memcheck',
+                publishResultsForAbortedBuilds: false,
+                publishResultsForFailedBuilds: false,
+                sourceSubstitutionPaths: '',
+                unstableThresholdDefinitelyLost: '',
+                unstableThresholdInvalidReadWrite: '',
+                unstableThresholdTotal: ''
+		    )
+	      xunit (
+                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                tools: [ BoostTest(pattern: 'build/linux/tests/*-results.xml') ]
+                    )
+	      xunit (
+		thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+		tools: [ GoogleTest(pattern: 'build/linux/tests/*-utest.xml') ]
+		    )
                script {
                   if (currentBuild.result == null) {
                      currentBuild.result = 'SUCCESS' 
