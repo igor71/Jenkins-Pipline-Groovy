@@ -1,9 +1,7 @@
-node('master') {
+node('bitbucket_sync') {
   stage('Sync YiInfrastructure Repo') {
     sh '''#!/bin/bash -xe
-             whoami
-             id
-             cd /media/server_1/F_2TB/CODE_CENTRAL/YiInfrastructure.git
+             cd /media/CODE_CENTRAL/YiInfrastructure.git
              HEAD=$(git rev-parse --short=7 --verify HEAD)
              printf '%s\n' "$HEAD"
              git log --oneline --abbrev-commit --all --graph --decorate
@@ -15,30 +13,30 @@ node('master') {
   }
   stage('Sync ADAS Repo') {
     sh '''#!/bin/bash -xe
-             cd /media/server_1/F_2TB/CODE_CENTRAL/adas
+	         cd /media/CODE_CENTRAL/adas
              git pull origin master
              git push origin --all -f
 	   '''
   }
   stage('Sync YiToolchains Repo') {
     sh '''#!/bin/bash -xe
-             cd /media/server_1/F_2TB/CODE_CENTRAL/YiToolchains.git
+	         cd /media/CODE_CENTRAL/YiToolchains.git
              git pull origin master
              git push origin --all -f
 	   '''
   }
   stage('Sync YiDocker Repo') {
     catchError {sh '''#!/bin/bash -xe
-                   cd /media/server_1/F_2TB/CODE_CENTRAL/YiDocker.git
+                   cd /media/CODE_CENTRAL/YiDocker.git
                    git branch
                    HEAD=$(git rev-parse --short=7 --verify HEAD)
                    printf '%s\n' "$HEAD"
                    git log --oneline --abbrev-commit --all --graph --decorate
                    git diff origin/master
-		   
-		   eval `ssh-agent -s`
-		   ssh-add /home/jenkins/.ssh/jenkins-bitbucket
-		   ssh -T hg@bitbucket.org
+                   
+				   eval `ssh-agent -s`
+                   ssh-add /home/jenkins/.ssh/jenkins-bitbucket
+                   ssh -T hg@bitbucket.org
                    git pull origin master
                    git push origin --all -f
         ''' }
