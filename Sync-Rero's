@@ -13,14 +13,14 @@ node('bitbucket_sync') {
   }
   stage('Sync ADAS Repo') {
     sh '''#!/bin/bash -xe
-	         cd /media/CODE_CENTRAL/adas
+             cd /media/CODE_CENTRAL/adas
              git pull origin master
              git push origin --all -f
 	   '''
   }
   stage('Sync YiToolchains Repo') {
     sh '''#!/bin/bash -xe
-	         cd /media/CODE_CENTRAL/YiToolchains.git
+             cd /media/CODE_CENTRAL/YiToolchains.git
              git pull origin master
              git push origin --all -f
 	   '''
