@@ -1,0 +1,55 @@
+node('master') {
+  stage('Sync YiInfrastructure Repo') {
+    sh '''#!/bin/bash -xe
+             whoami
+             id
+             cd /media/server_1/F_2TB/CODE_CENTRAL/YiInfrastructure.git
+             HEAD=$(git rev-parse --short=7 --verify HEAD)
+             printf '%s\n' "$HEAD"
+             git log --oneline --abbrev-commit --all --graph --decorate
+             git diff origin/master
+
+             # git pull origin master
+             # git push origin --all -f
+       '''
+  }
+  stage('Sync ADAS Repo') {
+    sh '''#!/bin/bash -xe
+	         cd /media/server_1/F_2TB/CODE_CENTRAL/adas
+             git pull origin master
+             git push origin --all -f
+	   '''
+  }
+  stage('Sync YiToolchains Repo') {
+    sh '''#!/bin/bash -xe
+	         cd /media/server_1/F_2TB/CODE_CENTRAL/YiToolchains.git
+             git pull origin master
+             git push origin --all -f
+	   '''
+  }
+  stage('Sync YiDocker Repo') {
+    catchError {sh '''#!/bin/bash -xe
+                   cd /media/server_1/F_2TB/CODE_CENTRAL/YiDocker.git
+                   git branch
+                   HEAD=$(git rev-parse --short=7 --verify HEAD)
+                   printf '%s\n' "$HEAD"
+                   git log --oneline --abbrev-commit --all --graph --decorate
+                   git diff origin/master
+
+                   git pull origin master
+                   git push origin --all -f
+        ''' }
+    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+  }
+  stage('Final Step') {
+     try {
+      sh 'echo "All Done!!!"'
+        currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'user_to@mycompany.com', sendToIndividuals: true])
+    }
+   }
+}
