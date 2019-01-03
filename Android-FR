@@ -1,0 +1,77 @@
+node {
+    /* Requires the Docker Pipeline plugin to be installed */
+  docker.image('yi/adas-build:android').inside('-v /var/lib/jenkins/workspace/3.x-Android-Scripted-Pipline/.ccache/:/usr/src/.ccache') {
+  stage ('Clone ADAS Repo') {
+    git branch: 'develop', credentialsId: 'dafb29ef-d9a7-47ec-b15b-1794000ffd8c', url: 'ssh://git@server_1/media/CODE_CENTRAL/adas'
+    sh '''#!/bin/bash -xe
+          cd $WORKSPACE
+          #test -e .git && git clean -fdx
+          git submodule update --init --recursive 
+       '''
+	}
+  stage('Build_Fr_Demo') {
+    sh '''#!/bin/bash -xe
+          export ANDROID_HOME=/var/lib/jenkins/devel/android-sdk-linux
+          export NDK_ROOT=/var/lib/jenkins/devel/android-sdk-linux/ndk-bundle
+          export PATH=$NDK_ROOT:$PATH
+          cd $WORKSPACE/project/android
+          ./build_fr_demo.sh
+
+          if [ $? != 0 ]; then
+             return 1
+          fi 
+       '''
+  }
+  stage('Build_Fr_Sample')
+    sh '''#!/bin/bash -xe
+          export ANDROID_HOME=/var/lib/jenkins/devel/android-sdk-linux
+          export NDK_ROOT=/var/lib/jenkins/devel/android-sdk-linux/ndk-bundle
+          export PATH=$NDK_ROOT:$PATH
+          
+          echo "Configure Gragle To Run On Ubuntu 16.04"
+          cd $WORKSPACE
+		  VER=$(lsb_release -a | grep Description | cut -d' ' -f2)
+
+          if [[ $VER == *"16.04.4"* ]] || [[ $VER == *"16.04.5"* ]] ; then
+
+             sed -i 's/arguments "-G Unix Makefiles"/arguments "-GUnix Makefiles"/' samples/android/fr_app/sdk/build.gradle
+             SET=$(sed -n "44 p" samples/android/fr_app/sdk/build.gradle | cut -f17- -d' ')
+   
+          else
+
+             SET=$(find samples/android/fr_app/sdk/build.gradle -type f | xargs grep -n ' arguments "-G Unix Makefiles"' | cut -f17- -d' ')
+
+          fi
+
+          echo "All Done!!! Run Android Build For Ubuntu ${VER} With Following Settings:${SET}"
+		 
+		  cd $WORKSPACE/project/android
+          chmod +x ../../samples/android/fr_app/gradlew
+          ./build_fr_sample.sh
+
+          if [ $? != 0 ]; then
+             return 1
+          fi
+       '''
+  
+  
+  
+  stage('Final_Step')
+    try {
+       sh '''#!/bin/bash -xe
+		     cd $WORKSPACE
+		     echo "All build steps passed within $WORKSPACE"
+			 echo "The $WORKSPACE available on Jenkins host"
+             bundle=bundle-FR-3.4.$BUILD_NUMBER
+             mkdir -p //media/common//OneDriveAudio//admin\\ -\\AI//FR_3.4_bundle
+             tar zcvf //media/common//OneDriveAudio//admin\\ -\\AI//FR_3.4_bundle//$bundle.tgz bundle-FR
+          '''
+     currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+  }
+}
