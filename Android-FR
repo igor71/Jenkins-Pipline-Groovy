@@ -1,6 +1,6 @@
 node {
     /* Requires the Docker Pipeline plugin to be installed */
-  docker.image('yi/adas-build:android').inside('-v /var/lib/jenkins/workspace/3.x-Android-Scripted-Pipline/.ccache/:/usr/src/.ccache') {
+  docker.image('yi/adas-build:android').inside('-v /var/lib/jenkins/workspace/3.x-Android-Scripted-Pipline/.ccache/:/usr/src/.ccache -v /media:/media') {
   stage ('Clone ADAS Repo') {
     git branch: 'develop', credentialsId: 'dafb29ef-d9a7-47ec-b15b-1794000ffd8c', url: 'ssh://git@server_1/media/CODE_CENTRAL/adas'
     sh '''#!/bin/bash -xe
@@ -22,7 +22,7 @@ node {
           fi 
        '''
   }
-  stage('Build_Fr_Sample')
+  stage('Build_Fr_Sample') {
     sh '''#!/bin/bash -xe
           export ANDROID_HOME=/var/lib/jenkins/devel/android-sdk-linux
           export NDK_ROOT=/var/lib/jenkins/devel/android-sdk-linux/ndk-bundle
@@ -44,8 +44,7 @@ node {
           fi
 
           echo "All Done!!! Run Android Build For Ubuntu ${VER} With Following Settings:${SET}"
-		 
-		  cd $WORKSPACE/project/android
+	  cd $WORKSPACE/project/android
           chmod +x ../../samples/android/fr_app/gradlew
           ./build_fr_sample.sh
 
@@ -53,18 +52,21 @@ node {
              return 1
           fi
        '''
-  
-  
-  
-  stage('Final_Step')
+  }
+  stage('Publish_Artifacts') {
     try {
        sh '''#!/bin/bash -xe
-		     cd $WORKSPACE
-		     echo "All build steps passed within $WORKSPACE"
-			 echo "The $WORKSPACE available on Jenkins host"
-             bundle=bundle-FR-3.4.$BUILD_NUMBER
-             mkdir -p //media/common//OneDriveAudio//admin\\ -\\AI//FR_3.4_bundle
-             tar zcvf //media/common//OneDriveAudio//admin\\ -\\AI//FR_3.4_bundle//$bundle.tgz bundle-FR
+             cd $WORKSPACE
+	     echo "All build steps passed within $WORKSPACE"
+	     echo "The $WORKSPACE available on Jenkins host"
+	     bundle=bundle-FR-3.4.$BUILD_NUMBER
+	     DIR=//media//common//OneDriveAudio//admin\\ -\\ AI//FR_3.4_bundle
+	     if [ -d "$DIR" ]; then
+	        tar zcvf //media//common//OneDriveAudio//admin\\ -\\ AI//FR_3.4_bundle//$bundle.tgz bundle-FR
+             else
+                mkdir -p //media//common//OneDriveAudio//admin\\ -\\ AI//FR_3.4_bundle
+                tar zcvf //media//common//OneDriveAudio//admin\\ -\\ AI//FR_3.4_bundle//$bundle.tgz bundle-FR
+             fi
           '''
      currentBuild.result = 'SUCCESS'
     } catch (any) {
@@ -74,4 +76,5 @@ node {
         step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
     }
   }
+ }
 }
