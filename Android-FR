@@ -32,7 +32,7 @@ node {
           cd $WORKSPACE
 		  VER=$(lsb_release -a | grep Description | cut -d' ' -f2)
 
-          if [[ $VER == *"16.04.4"* ]] || [[ $VER == *"16.04.5"* ]] ; then
+          if [[ $VER == *"16.04.4"* ]] || [[ $VER == *"16.04.5"* ]] || [[ $VER == *"GNU/Linux"* ]] ; then
 
              sed -i 's/arguments "-G Unix Makefiles"/arguments "-GUnix Makefiles"/' samples/android/fr_app/sdk/build.gradle
              SET=$(sed -n "44 p" samples/android/fr_app/sdk/build.gradle | cut -f17- -d' ')
