@@ -1,0 +1,109 @@
+/*
+   Automatically configure docker cloud stack in Jenkins.
+   Docker plugin v1.1.5
+ */
+
+//configure cloud stack
+
+
+import com.nirima.jenkins.plugins.docker.DockerCloud
+import com.nirima.jenkins.plugins.docker.DockerTemplate
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase
+import com.nirima.jenkins.plugins.docker.launcher.AttachedDockerComputerLauncher
+import io.jenkins.docker.connector.DockerComputerAttachConnector
+import jenkins.model.Jenkins
+ 
+// parameters
+
+def dockerCloudParameters = [
+  name:             'Adas-Project-Server-6',
+  serverUrl:        'tcp://192.168.1.106:4243',
+  credentialsId:    '',
+  version:          '1.26',
+  connectTimeout:   5,
+  readTimeout:      15,
+  dockerHostname:   '',
+  containerCapStr:  '5' 
+]
+
+def DockerTemplateParameters = [
+  labelString:    'docker-adas-android',
+  instanceCapStr: '1',
+  remoteFs:       '/var/lib/jenkins'
+]
+
+def dockerTemplateBaseParameters = [
+  image:              'yi/adas-build:android',
+  bindAllPorts:       false,
+  bindPorts:          '',
+  cpuShares:          null,
+  dnsString:          '192.168.1.250',
+  dockerCommand:      '',
+  environmentsString: '',
+  extraHostsString:   '',
+  hostname:           '',
+  macAddress:         '',
+  memoryLimit:        null,
+  memorySwap:         null,
+  network:            '',
+  privileged:         true,
+  pullCredentialsId:  '',
+  sharedMemorySize:   null,
+  tty:                false,
+  volumesFromString:  '',
+  volumesString:      'media:/media /var/lib/jenkins/workspace/CCACHE/Android/.ccache/:/usr/src/.ccache'
+]
+
+// https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.1.2/src/main/java/com/nirima/jenkins/plugins/docker/DockerTemplateBase.java
+DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
+  dockerTemplateBaseParameters.image,
+  dockerTemplateBaseParameters.pullCredentialsId,
+  dockerTemplateBaseParameters.dnsString,
+  dockerTemplateBaseParameters.network,
+  dockerTemplateBaseParameters.dockerCommand,
+  dockerTemplateBaseParameters.volumesString,
+  dockerTemplateBaseParameters.volumesFromString,
+  dockerTemplateBaseParameters.environmentsString,
+  dockerTemplateBaseParameters.hostname,
+  dockerTemplateBaseParameters.memoryLimit,
+  dockerTemplateBaseParameters.memorySwap,
+  dockerTemplateBaseParameters.cpuShares,
+  dockerTemplateBaseParameters.sharedMemorySize,
+  dockerTemplateBaseParameters.bindPorts,
+  dockerTemplateBaseParameters.bindAllPorts,
+  dockerTemplateBaseParameters.privileged,
+  dockerTemplateBaseParameters.tty,
+  dockerTemplateBaseParameters.macAddress,
+  dockerTemplateBaseParameters.extraHostsString
+)
+ 
+// https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.1.2/src/main/java/com/nirima/jenkins/plugins/docker/DockerTemplate.java
+DockerTemplate dockerTemplate = new DockerTemplate(
+  dockerTemplateBase,
+  new DockerComputerAttachConnector(),
+  DockerTemplateParameters.labelString,
+  DockerTemplateParameters.remoteFs,
+  DockerTemplateParameters.instanceCapStr
+)
+ 
+// https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.1.2/src/main/java/com/nirima/jenkins/plugins/docker/DockerCloud.java
+DockerCloud dockerCloud = new DockerCloud(
+  dockerCloudParameters.name,
+  [dockerTemplate],
+  dockerCloudParameters.serverUrl,
+  dockerCloudParameters.containerCapStr,
+  dockerCloudParameters.connectTimeout,
+  dockerCloudParameters.readTimeout,
+  dockerCloudParameters.credentialsId,
+  dockerCloudParameters.version,
+  dockerCloudParameters.dockerHostname
+)
+ 
+// get Jenkins instance
+Jenkins jenkins = Jenkins.getInstance()
+ 
+// add cloud configuration to Jenkins
+jenkins.clouds.add(dockerCloud)
+ 
+// save current Jenkins state to disk
+jenkins.save()
