@@ -4,8 +4,8 @@ pipeline {
         stage('Build in Docker') {
             agent {
                 docker {
-                    image 'yi/adas-build:0.1'
-                    args '-v /var/lib/jenkins/workspace/.ccache/:/usr/src/.ccache'
+                    image 'yi/adas-build:linux'
+                    args '-v /var/lib/jenkins/workspace/CCACHE/Linux/:/usr/src/.ccache'
                     reuseNode true
             }
         }  
