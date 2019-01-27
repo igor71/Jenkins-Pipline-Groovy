@@ -1,26 +1,27 @@
 node('mongo_bu') {
   stage('Create MongoDB Arcive') {
-    sh '''#!/bin/bash -xe
-             cd /data
-             echo jenkins | sudo -S chmod -R 777 db
-             tar cpzf MongoDB_BU_${BUILD_NUMBER}.tgz . --warning=no-file-changed --exclude=./*tgz || ( export ret=$?; [[ $ret -eq 1 ]] || exit "$ret" )
-             mv MongoDB_BU_${BUILD_NUMBER}.tgz $WORKSPACE
-             file="/data/MongoDB_BU_${BUILD_NUMBER}.tgz"
-                  if [ -f $file ] ; then
-                        rm $file
-                  fi
-       '''
+    catchError {sh '''#!/bin/bash -xe
+	   cd $WORKSPACE
+       mongodump --db yidb --archive --host 192.168.1.114 > $PWD/timestamp.yidb.archive
+       mongodump --db maindb --archive --host 192.168.1.114 > $PWD/timestamp.maindb.archive
+	   du -sh $WORKSPACE
+       tar cpzf MongoDB_BU_${BUILD_NUMBER}.tgz $(ls timestamp.yidb.archive timestamp.maindb.archive) --warning=no-file-changed --exclude=./PW.txt || ( export ret=$?; [[ $ret -eq 1 ]] || exit "$ret" )
+       file="$WORKSPACE/MongoDB_BU_${BUILD_NUMBER}.tgz"
+       if [ -f $file ] ; then
+          rm timestamp.yidb.archive timestamp.maindb.archive  
+       fi
+       ''' }
+	step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com, sagi.golan@xiaoyi.com', sendToIndividuals: true])
   }
   stage('Upload Backup Arcive To Network Share') {
-    sh 'pv MongoDB_BU_${BUILD_NUMBER}.tgz > /media/common/MONGO_BACKUP/MongoDB_BU_${BUILD_NUMBER}.tgz'
+    sh 'pv -f $WORKSPACE/MongoDB_BU_${BUILD_NUMBER}.tgz > /media/common/MONGO_BACKUP/MongoDB_BU_${BUILD_NUMBER}.tgz'
   }
   stage('Keep Backup Files Only For Latest 7 Days') {
     sh 'sshpass -f PW.txt ssh -tt -o StrictHostKeyChecking=no admin@yifileserver "find /share/Common/MONGO_BACKUP -mtime +7 -type f | xargs rm -f"'
   }
-  
   stage('Archive Inegrity Check') {
     catchError {sh '''#!/bin/bash -xe
-                   md5sum /media/common/MONGO_BACKUP/MongoDB_BU_${BUILD_NUMBER}.tgz > MongoDB_BU_${BUILD_NUMBER}.tgz.md5
+                   md5sum /media/common/MONGO_BACKUP/MongoDB_BU_${BUILD_NUMBER}.tgz > $WORKSPACE/MongoDB_BU_${BUILD_NUMBER}.tgz.md5
                    md5sum -c MongoDB_BU_${BUILD_NUMBER}.tgz.md5 
                        if [ "$?" != "0" ]; then
                           echo "SHA1 changed! Security breach? Job Will Be Marked As Failed!!!"
@@ -29,7 +30,6 @@ node('mongo_bu') {
         ''' }
     step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com, sagi.golan@xiaoyi.com', sendToIndividuals: true])
   }
-  
   stage('Remove Original Archive File From $WORKSPACE') {
      try {
       sh 'rm -f $WORKSPACE/MongoDB_BU_*'
