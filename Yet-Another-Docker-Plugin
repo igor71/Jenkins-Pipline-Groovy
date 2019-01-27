@@ -1,0 +1,81 @@
+/*
+   Adding new docker template into existing docker cloud stack in Jenkins.
+   Docker plugin v1.1.5
+ */
+
+//configure cloud stack
+
+
+import com.nirima.jenkins.plugins.docker.DockerTemplate
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase
+import io.jenkins.docker.connector.DockerComputerAttachConnector
+import jenkins.model.Jenkins
+ 
+// parameters
+
+def AndroidTemplateParameters = [
+  labelString:    'docker-adas-android',
+  instanceCapStr: '1',
+  remoteFs:       '/var/lib/jenkins'
+]
+
+def AndroidTemplateBaseParameters = [
+  image:              'yi/adas-build:android',
+  bindAllPorts:       false,
+  bindPorts:          '',
+  cpuShares:          null,
+  dnsString:          '192.168.1.250',
+  dockerCommand:      '',
+  environmentsString: '',
+  extraHostsString:   '',
+  hostname:           '',
+  macAddress:         '',
+  memoryLimit:        null,
+  memorySwap:         null,
+  network:            '',
+  privileged:         true,
+  pullCredentialsId:  '',
+  sharedMemorySize:   null,
+  tty:                false,
+  volumesFromString:  '',
+  volumesString:      'media:/media /var/lib/jenkins/workspace/CCACHE/Android/.ccache/:/usr/src/.ccache'
+]
+
+// https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.1.2/src/main/java/com/nirima/jenkins/plugins/docker/DockerTemplateBase.java
+DockerTemplateBase AndroidTemplateBase = new DockerTemplateBase(
+  AndroidTemplateBaseParameters.image,
+  AndroidTemplateBaseParameters.pullCredentialsId,
+  AndroidTemplateBaseParameters.dnsString,
+  AndroidTemplateBaseParameters.network,
+  AndroidTemplateBaseParameters.dockerCommand,
+  AndroidTemplateBaseParameters.volumesString,
+  AndroidTemplateBaseParameters.volumesFromString,
+  AndroidTemplateBaseParameters.environmentsString,
+  AndroidTemplateBaseParameters.hostname,
+  AndroidTemplateBaseParameters.memoryLimit,
+  AndroidTemplateBaseParameters.memorySwap,
+  AndroidTemplateBaseParameters.cpuShares,
+  AndroidTemplateBaseParameters.sharedMemorySize,
+  AndroidTemplateBaseParameters.bindPorts,
+  AndroidTemplateBaseParameters.bindAllPorts,
+  AndroidTemplateBaseParameters.privileged,
+  AndroidTemplateBaseParameters.tty,
+  AndroidTemplateBaseParameters.macAddress,
+  AndroidTemplateBaseParameters.extraHostsString
+)
+ 
+// get Jenkins instance
+Jenkins jenkins = Jenkins.getInstance()
+
+def cloud = jenkins.clouds.getByName("Adas-Project-Server-18")
+cloud.addTemplate(new DockerTemplate(
+  AndroidTemplateBase,
+  new DockerComputerAttachConnector(),
+  AndroidTemplateParameters.labelString,
+  AndroidTemplateParameters.remoteFs,
+  AndroidTemplateParameters.instanceCapStr
+))
+ 
+ 
+// save current Jenkins state to disk
+jenkins.save()
