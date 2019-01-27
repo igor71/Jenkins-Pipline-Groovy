@@ -1,10 +1,10 @@
 node('mongo_bu') {
   stage('Create MongoDB Arcive') {
     catchError {sh '''#!/bin/bash -xe
-	   cd $WORKSPACE
+       cd $WORKSPACE
        mongodump --db yidb --archive --host 192.168.1.114 > $PWD/timestamp.yidb.archive
        mongodump --db maindb --archive --host 192.168.1.114 > $PWD/timestamp.maindb.archive
-	   du -sh $WORKSPACE
+       du -sh $WORKSPACE
        tar cpzf MongoDB_BU_${BUILD_NUMBER}.tgz $(ls timestamp.yidb.archive timestamp.maindb.archive) --warning=no-file-changed --exclude=./PW.txt || ( export ret=$?; [[ $ret -eq 1 ]] || exit "$ret" )
        file="$WORKSPACE/MongoDB_BU_${BUILD_NUMBER}.tgz"
        if [ -f $file ] ; then
