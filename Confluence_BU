@@ -1,0 +1,22 @@
+node('server_1') {
+  stage('Keep Backup Files Only For Latest 14 Days') {
+    sh 'find /media/F_2TB/BACKUP/confluence/backups -mtime +14 -type f | xargs rm -f'
+  }
+  stage('Sync Backup Arcives To Network Share') {
+    sh '''#!/bin/bash -xe
+            cd /media/F_2TB/BACKUP/confluence
+            rsync -axP --update --delete-during --stats --human-readable ./backups/ /media/common/IT/CONFLUENCE_BU | sed '0,/^$/d'
+       '''
+  }
+  stage('Checking Backup Folder Size') {
+     try {
+      sh 'cd /media/F_2TB/BACKUP/confluence/backups && du -sh'
+        currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+   }
+}
