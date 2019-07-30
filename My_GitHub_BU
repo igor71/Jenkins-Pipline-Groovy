@@ -1,0 +1,48 @@
+node('github_bu') {
+  stage('Checking ENV') {
+    sh '''#!/bin/bash -xe
+	   REPO_DIR=/tmp/My_GitHub
+	   PRIVATE_KEY=$HOME/.ssh/igor71-github
+	   if [ ! -f "$PRIVATE_KEY" ]; then pv /media/common/IT/YiAdministration/jenkins-github.ssh.tar | tar xpf - -C $HOME; fi
+	   if [ ! -d "$REPO_DIR" ]; then mkdir -p $REPO_DIR; fi
+       '''
+  }
+  stage('Checking Connection & Clone') {
+    sh '''#!/bin/bash -xe
+	   eval "$(ssh-agent -s)"
+	   ssh-add $HOME/.ssh/igor71-github
+	   ssh-add -l
+	   ssh -T git@github.com || error=true
+	   REPO_DIR=/tmp/My_GitHub
+	   cd $REPO_DIR
+	   curl -si https://api.github.com/users/igor71/repos | grep ssh_url | cut -d '"' -f4 | xargs -i git clone {}
+	   '''
+  }
+  stage('List All Repos') {
+     sh '''#!/bin/bash -xe
+        cd /tmp/My_GitHub
+        curl -si https://api.github.com/users/igor71/repos | grep ssh_url | cut -d '"' -f4 >> repo_list.txt
+        '''
+  }
+  stage('Archive & Rsync Repos') {
+    catchError {sh '''#!/bin/bash -xe
+	               cd /tmp/My_GitHub
+                   for dir in `find . -maxdepth 1 -type d  | grep -v "^\\.$" `; do tar -czf ${dir}_`date +%Y-%m-%-d---%H-%M-%S`.tar.gz ${dir}; done
+                   find . -maxdepth 1 -mindepth 1 -type d -exec rm -rf '{}' \\; 
+                   cd ..
+                   time rsync -axP --no-o --no-g --delete-after --stats --human-readable My_GitHub/ /media/server_1/F_2TB/USERS/irabkin/My_GitHub | sed '0,/^$/d'
+        ''' }
+    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+  }
+  stage('Cleanup Workspace') {
+     try {
+      sh 'find /tmp/My_GitHub -type f -name "*.tar.gz" -exec rm -f {} \\;'
+        currentBuild.result = 'SUCCESS'
+    } catch (any) {
+        currentBuild.result = 'FAILURE'
+        throw any //rethrow exception to prevent the build from proceeding
+    } finally {
+        step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
+    }
+   }
+}
