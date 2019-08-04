@@ -27,7 +27,7 @@ node('github_bu') {
   stage('Archive & Rsync Repos') {
     catchError {sh '''#!/bin/bash -xe
 	               cd /tmp/My_GitHub
-                   for dir in `find . -maxdepth 1 -type d  | grep -v "^\\.$" `; do tar -czf ${dir}_`date +%Y-%m-%-d---%H-%M-%S`.tar.gz ${dir}; done
+                   for dir in `find . -maxdepth 1 -type d  | grep -v "^\\.$" `; do tar -czf ${dir}.tar.gz ${dir}; done
                    find . -maxdepth 1 -mindepth 1 -type d -exec rm -rf '{}' \\; 
                    cd ..
                    time rsync -axP --no-o --no-g --delete-after --stats --human-readable My_GitHub/ /media/server_1/F_2TB/USERS/irabkin/My_GitHub | sed '0,/^$/d'
