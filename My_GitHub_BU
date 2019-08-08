@@ -26,11 +26,11 @@ node('github_bu') {
   }
   stage('Archive & Rsync Repos') {
     catchError {sh '''#!/bin/bash -xe
-	               cd /tmp/My_GitHub
+                   cd /tmp/My_GitHub
                    for dir in `find . -maxdepth 1 -type d  | grep -v "^\\.$" `; do tar -czf ${dir}.tar.gz ${dir}; done
                    find . -maxdepth 1 -mindepth 1 -type d -exec rm -rf '{}' \\; 
                    cd ..
-                   time rsync -axP --no-o --no-g --delete-after --stats --human-readable My_GitHub/ /media/server_1/F_2TB/USERS/irabkin/My_GitHub | sed '0,/^$/d'
+                   time rsync -axP --no-o --no-g --stats --human-readable My_GitHub/ /media/server_1/F_2TB/USERS/irabkin/My_GitHub | sed '0,/^$/d'
         ''' }
     step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
   }
