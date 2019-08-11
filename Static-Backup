@@ -1,13 +1,25 @@
 node('static_bu') {
   stage('Sync Bucket Folder') {
     sh '''#!/bin/bash -xe
-	         cd /media/DATA_HARD/static/shared
-	         ls -lh /media/ORICO/YiDB/static/shared
+             cd /media/DATA_HARD/static/shared
+	     ls -lh /media/ORICO/YiDB/static/shared
              echo ""
              date "+%H:%M:%S --->>> %d/%m/%y"
              echo ""
              echo " BUCKET FOLDER "
              time rsync -ahxPe "ssh -p 22 -i /home/jenkins/.ssh/YiDB_Sync" --delete-after  --info=progress2 --stats bucket/ admin@yifileserver:/share/Common/YiDB/static/shared/bucket/  | sed '0,/^$/d'
+             echo ""
+             echo "###########################################################"
+       '''
+  }
+  stage('Sync BUG_CRAWLER Folder') {
+    sh '''#!/bin/bash -xe
+             cd /media/DATA_HARD/static/shared
+             echo ""
+             date "+%H:%M:%S --->>> %d/%m/%y"
+             echo ""
+             echo " BUG_CRAWLER FOLDER "
+			 time rsync -ahxPe "ssh -p 22 -i /home/jenkins/.ssh/YiDB_Sync" --delete-after  --info=progress2 --stats bug_crawler/ admin@yifileserver:/share/Common/YiDB/static/shared/bug_crawler/  | sed '0,/^$/d'
              echo ""
              echo "###########################################################"
        '''
