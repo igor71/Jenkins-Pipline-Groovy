@@ -7,7 +7,7 @@ node('static_bu') {
              date "+%H:%M:%S --->>> %d/%m/%y"
              echo ""
              echo " BUCKET FOLDER "
-             time rsync -ahxP --info=progress2 --stats bucket/ /media/ORICO/YiDB/static/shared/bucket/ | sed '0,/^$/d'
+             time rsync -ahxPe "ssh -p 22 -i /home/jenkins/.ssh/YiDB_Sync" --delete-after  --info=progress2 --stats bucket/ admin@yifileserver:/share/Common/YiDB/static/shared/bucket/  | sed '0,/^$/d'
              echo ""
              echo "###########################################################"
        '''
@@ -19,7 +19,7 @@ node('static_bu') {
              date "+%H:%M:%S --->>> %d/%m/%y"
              echo ""
              echo " DRIVE FOLDER "
-             time rsync -ahxP --info=progress2 --stats drive/ /media/ORICO/YiDB/static/shared/drive/ | sed '0,/^$/d'
+             time rsync -ahxPe "ssh -p 22 -i /home/jenkins/.ssh/YiDB_Sync" --delete-after  --info=progress2 --stats drive/ admin@yifileserver:/share/Common/YiDB/static/shared/drive/  | sed '0,/^$/d'
              echo ""
              echo "###########################################################"
        '''
@@ -44,7 +44,7 @@ node('static_bu') {
              date "+%H:%M:%S --->>> %d/%m/%y"
              echo ""
              echo " DATASETS FOLDER "
-             time rsync -ahxP --info=progress2 --stats datasets/ /media/ORICO/YiDB/static/shared/datasets/ | sed '0,/^$/d'
+             time rsync -ahxPe "ssh -p 22 -i /home/jenkins/.ssh/YiDB_Sync" --delete-after  --info=progress2 --stats datasets/ admin@yifileserver:/share/Common/YiDB/static/shared/datasets/  | sed '0,/^$/d'
              echo ""
              echo "###########################################################"
        '''
