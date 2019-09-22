@@ -31,12 +31,12 @@ node('windows-adas') {
              SET BUILD_3RD_PARTY=build
                  if NOT "%1" == "" (
 	                if "%1" == "rebuild-infra" (
-		              set ADAS_BUILD_FR=rebuild
-		              set BUILD_3RD_PARTY=rebuild
+		             set ADAS_BUILD_FR=rebuild
+		             set BUILD_3RD_PARTY=rebuild
 	             )
 	             if "%1" == "rebuild" (
 		             set ADAS_BUILD_FR=%1
-	                )
+	             )
                  )
                  if NOT "%2" == "" ( set BUILD_3RD_PARTY=%2 )
                     call build_3rdParty.bat %ADAS_DEMO_VARIANT% %BUILD_3RD_PARTY% %2
@@ -52,7 +52,7 @@ node('windows-adas') {
 	}                                  
   stage('Running build_babycam_demo') {
 	bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -61,7 +61,7 @@ node('windows-adas') {
 	}
   stage('Running build_fr_demo') {
 	bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -70,7 +70,7 @@ node('windows-adas') {
 	}
   stage('Running build_fr_test') {
 	bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -79,7 +79,7 @@ node('windows-adas') {
 	}
   stage('Running build_fulldemo') {
 	bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -88,7 +88,7 @@ node('windows-adas') {
 	}
   stage('Running build_hm') {
 	bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -98,7 +98,7 @@ node('windows-adas') {
   stage('Running build_vc_test') {
      try {
          bat '''
-	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
