@@ -5,6 +5,7 @@ node('windows-adas') {
 		cd C:\\Jenkins\\workspace\\Windows-Build-Adas
 		forfiles /P . /M * /C "cmd /c if @isdir==FALSE del @file"
 		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
+		whoami
 	        git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/adas .
                 git submodule update --init --recursive
 	   '''
