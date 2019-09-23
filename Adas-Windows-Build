@@ -5,14 +5,14 @@ node('windows-adas') {
 		cd C:\\Jenkins\\workspace\\Windows-Build-Adas
 		forfiles /P . /M * /C "cmd /c if @isdir==FALSE del @file"
 		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
-		whoami
 	        git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/adas .
+		git clean -fdx
                 git submodule update --init --recursive
 	   '''
 	}
   stage('Running build_adas_demo') {
        catchError {bat '''
-             SET PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+             SET PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              SET BOOST_ROOT=C:\\local\\boost_1_70_0
              SET OPENCV_DIR=C:\\local\\opencv\\build
 	     
@@ -61,7 +61,7 @@ node('windows-adas') {
 	}
   stage('Running build_fr_demo') {
 	bat '''
-	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -70,7 +70,7 @@ node('windows-adas') {
 	}
   stage('Running build_fr_test') {
 	bat '''
-	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -79,7 +79,7 @@ node('windows-adas') {
 	}
   stage('Running build_fulldemo') {
 	bat '''
-	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -88,7 +88,7 @@ node('windows-adas') {
 	}
   stage('Running build_hm') {
 	bat '''
-	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
@@ -98,7 +98,7 @@ node('windows-adas') {
   stage('Running build_vc_test') {
      try {
          bat '''
-	     set PATH="C:\\Program Files\\CMake\\bin;%PATH%"
+	     set PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
              set BOOST_ROOT=C:\\local\\boost_1_70_0
              set OPENCV_DIR=C:\\local\\opencv\\build
 	     cd %WORKSPACE%\\project\\win
