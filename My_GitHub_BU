@@ -7,16 +7,18 @@ node('github_bu') {
 	   if [ ! -d "$REPO_DIR" ]; then mkdir -p $REPO_DIR; fi
        '''
   }
-  stage('Checking Connection & Clone') {
-    sh '''#!/bin/bash -xe
+  sstage('Checking Connection & Clone') {
+    catchError {sh '''#!/bin/bash -xe
 	   eval "$(ssh-agent -s)"
 	   ssh-add $HOME/.ssh/igor71-github
 	   ssh-add -l
 	   ssh -T git@github.com || error=true
 	   REPO_DIR=/tmp/My_GitHub
+	   find $REPO_DIR -mindepth 1 -maxdepth 1 -not -name "repo_list.txt" -print0 | xargs -0 rm -rf
 	   cd $REPO_DIR
 	   curl -si https://api.github.com/users/igor71/repos | grep ssh_url | cut -d '"' -f4 | xargs -i git clone {}
-	   '''
+	   '''}
+	step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'igor.rabkin@xiaoyi.com', sendToIndividuals: true])
   }
   stage('List All Repos') {
      sh '''#!/bin/bash -xe
