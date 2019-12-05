@@ -1,0 +1,75 @@
+pipeline {
+  agent {
+    docker { image 'yi/openvino:2.242'
+             args '-u root:sudo -v /media:/media'
+           }
+       }
+    stages {
+        stage('Test Given Deep Learning Model') {
+            steps {
+                sh '''#!/bin/bash -xe
+                   cd /opt/intel/openvino/deployment_tools/demo
+                   ./demo_squeezenet_download_convert_run.sh  
+                   if [ $? -ne 0 ]; then
+                      printf "Test #1 failed!!! Please check OpenVino installation"
+                      exit 1
+                   fi
+                   printf "Test #1 passed successfully!!!\n"
+                   printf "Hi, I'm sleeping for 10 seconds before next test...\n"
+                   sleep 10
+		           ''' 
+            }
+        }
+	    stage('Test Classification Sample') { 
+            steps {
+                sh '''#!/bin/bash -xe
+		           pv /media/common/DOWNLOADS/UBUNTU/OpenVINO/DEMO/squeezenet1.1.xml > /opt/intel/openvino_2019.2.242/deployment_tools/demo/squeezenet1.1.xml
+                   pv /media/common/DOWNLOADS/UBUNTU/OpenVINO/DEMO/squeezenet1.1.bin > /opt/intel/openvino_2019.2.242/deployment_tools/demo/squeezenet1.1.bin
+                   cd /opt/intel/openvino_2019.2.242/deployment_tools/inference_engine/samples/python_samples
+                   python classification_sample/classification_sample.py -m /opt/intel/openvino_2019.2.242/deployment_tools/demo/squeezenet1.1.xml -i /opt/intel/openvino_2019.2.242/deployment_tools/demo/car.png
+                   if [ $? -ne 0 ]; then
+                      printf "$Test #2 failed!!! Please check classification_sample.py script file\n"
+                      exit 1
+                   fi
+                   printf "Test #2 passed successfully!!!\n"
+                   printf "Hi, I'm sleeping for 10 seconds before next test...\n"
+                   ''' 
+		    }
+		}
+		stage('Xiaoyi Test') { 
+            steps {
+                sh '''#!/bin/bash -xe
+				        sleep 10
+				        cd /tmp
+				        cp -R /media/common/USERS/Sagi/OpenVINO .
+				        cd OpenVINO/
+                sed -i '8d' ssh_v2_VINO.py
+                sed -i "7 a sys.path.append('/opt/intel/openvino_2019.2.242/python/python3.6/')" ssh_v2_VINO.py
+				        python ssh_v2_VINO.py
+				        cd ..
+				        rm -rf OpenVINO
+				        if [ $? -ne 0 ]; then
+				           printf "Test #3 failed!!! Please check ssh_v2_VINO.py script file\n"
+					         exit 1
+				        fi
+				        printf "Test #3 passed successfully!!! All Done!!!"
+                   ''' 
+		    }
+		}
+    }
+		post {
+            always {
+			 node('yi-openvino') {
+               script {
+                  if (currentBuild.result == null) {
+                     currentBuild.result = 'SUCCESS' 
+                  }
+               }
+               step([$class: 'Mailer',
+                     notifyEveryUnstableBuild: true,
+                     recipients: "igor.rabkin@xiaoyi.com",
+                     sendToIndividuals: true])
+			  }
+            }
+         } 
+}
