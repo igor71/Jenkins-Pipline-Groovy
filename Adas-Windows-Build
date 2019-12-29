@@ -13,7 +13,7 @@ node('windows-adas') {
   stage('Running build_adas_demo') {
        catchError {bat '''
              SET PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
-             SET BOOST_ROOT=C:\\local\\boost_1_70_0
+             SET BOOST_ROOT=C:\\local\\boost_1_72_0
              SET OPENCV_DIR=C:\\local\\opencv\\build
 	     
 	     cd %WORKSPACE%\\project\\win
