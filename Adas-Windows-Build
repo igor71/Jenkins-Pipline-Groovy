@@ -7,7 +7,7 @@ node('windows-adas') {
 		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
 	        git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/YiProducts.git .
 		git clean -fdx
-                git submodule update --init --recursive
+                git pull --recurse-submodules=yes --jobs=10
 	   '''
 	}
   stage('Running build_adas_demo') {
