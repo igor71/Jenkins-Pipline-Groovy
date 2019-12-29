@@ -1,5 +1,5 @@
 node('windows-adas') {
-  stage('Clone ADAS Repo') {
+  stage('Clone YiProducts Repo') {
 	bat '''
 	    echo "CleanUP %WORKSPACE% Directory"
 		cd C:\\Jenkins\\workspace\\Windows-Build-Adas
