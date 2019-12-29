@@ -7,12 +7,18 @@ node('windows-adas') {
 		forfiles /P . /M * /C "cmd /c if @isdir==TRUE rmdir /S /Q @file"
 	        git clone --branch=develop --depth=1 ssh://git@192.168.1.49/media/CODE_CENTRAL/YiProducts.git .
 		git clean -fdx
-                git pull --recurse-submodules=yes --jobs=10
+                git submodule update --init --recursive --progress --remote yi_infrastructure
+		cd yi_infrastructure
+		git checkout develop
+		cd tensorflow
+		git checkout r.1.14
+		git pull
+		cd ../..
 	   '''
 	}
   stage('Running build_adas_demo') {
        catchError {bat '''
-             SET PATH="C:\\Program Files (x86)\\CMake\\bin;%PATH%"
+             SET PATH="C:\\Program Files (x./86)\\CMake\\bin;%PATH%"
              SET BOOST_ROOT=C:\\local\\boost_1_72_0
              SET OPENCV_DIR=C:\\local\\opencv\\build
 	     
