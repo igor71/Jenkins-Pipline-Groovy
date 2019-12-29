@@ -12,7 +12,6 @@ node('windows-adas') {
 		git checkout develop
 		cd tensorflow
 		git checkout r.1.14
-		git pull
 		cd ../..
 	   '''
 	}
